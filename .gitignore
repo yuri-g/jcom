@@ -1,0 +1,13 @@
+target/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+# Windows image file caches
+Thumbs.db
+
+# Folder config file
+Desktop.ini
+
