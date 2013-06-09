@@ -20,20 +20,20 @@ public class Process implements Runnable {
         //writing phase
         for (int i = 0; i < 2; i++) {
             //writing to random channels 5 times
-            Integer chNumber = randomGenerator.nextInt(2);
-            if (id != i) {
-                channels[id][i].push("Read");
-                System.out.println("Process " + id + " pushed 'read' to " + i + " channel");
-                System.out.println(System.nanoTime());
+            Integer chNumber = randomGenerator.nextInt(3);
+            if (id != chNumber) {
+                channels[id][chNumber].push("Read");
+                System.out.println("Process " + id + " pushed 'read' to " + chNumber + " channel");
+
 
             }
 
         }
         //reading phase
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
             if (id != i) {
                 System.out.println("Process " + id + " got " + channels[i][id].pull() + " from " + i);
-                System.out.println(System.nanoTime());
+
             }
 
         }

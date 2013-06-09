@@ -21,5 +21,6 @@ public class App
             processes[i] = new Process(i, channels);
             (new Thread(processes[i])).start();
         }
+
     }
 }
