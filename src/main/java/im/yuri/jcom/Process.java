@@ -11,6 +11,7 @@ public class Process implements Runnable {
 
 
     private Channel[][] channels;
+    private Resource resource;
     private Integer id;
     public Process(Integer id, Channel[][] channels) {
       this.id = id;
@@ -18,6 +19,7 @@ public class Process implements Runnable {
     }
 
     public void run() {
+      resource = new Resource(this.id);
       Random randomGenerator = new Random();
         //writing phase
         Operation op = new Operation();
