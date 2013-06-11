@@ -30,6 +30,11 @@ public class Operation {
     private OperationType type;
     private String value;
     private Integer node;
+    public Operation(OperationType type, String value) {
+        this.type = type;
+        this.value = value;
+    }
+
     public Operation() {
 
     }

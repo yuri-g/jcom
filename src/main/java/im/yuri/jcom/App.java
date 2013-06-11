@@ -17,7 +17,7 @@ public class App
                 channels[i][j] = new Channel();
             }
         }
-        for (int i = 0; i<2; i++) {
+        for (int i = 0; i < 2; i++) {
             processes[i] = new Process(i, channels);
             (new Thread(processes[i])).start();
         }

@@ -3,28 +3,27 @@ package im.yuri.jcom;
 import java.util.ArrayList;
 
 public class Channel {
-    //public Operation[] stack;
-    public ArrayList<String> stack;
+    public ArrayList<Operation> stack;
 
 
     public Channel() {
-        stack = new ArrayList<String>();
+        stack = new ArrayList<Operation>();
     }
 
-    public void push(String item) {
+    public void push(Operation item) {
         stack.add(item);
 
     }
-    public String pull() {
+    public Operation pull() {
         if (!stack.isEmpty())
             return stack.remove(0);
         else
-            return "Nothing";
+            return null;
     }
 
     public void inspect() {
-        for (String s: stack) {
-            System.out.print(s + " ");
+        for (Operation o: stack) {
+            System.out.print(o + " ");
         }
     }
 }
