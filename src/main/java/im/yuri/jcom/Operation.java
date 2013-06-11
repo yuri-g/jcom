@@ -19,17 +19,9 @@ public class Operation {
         this.value = value;
     }
 
-    public Integer getNode() {
-        return node;
-    }
-
-    public void setNode(Integer node) {
-        this.node = node;
-    }
 
     private OperationType type;
     private String value;
-    private Integer node;
     public Operation(OperationType type, String value) {
         this.type = type;
         this.value = value;
