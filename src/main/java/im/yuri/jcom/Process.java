@@ -19,29 +19,19 @@ public class Process implements Runnable {
     }
 
     public void run() {
-      resource = new Resource(this.id);
-      Random randomGenerator = new Random();
+        resource = new Resource(this.id);
+        Random randomGenerator = new Random();
+
+        // todo:
+        // write generator of transactions
+        DistributedTransaction d = new DistributedTransaction();
+        Transaction[] transactions = new Transaction[2];
+        transactions[0] = GenerateTransaction(0, "Z", "X", 69);
+        transactions[1] = GenerateTransaction(1, "X","Y", 20);
+        d.setTransactions(transactions);
+
         //writing phase
-        Operation op = new Operation();
         for (int i = 0; i <= 1; i++) {
-            // todo:
-            // write generator of transactions
-
-            DistributedTransaction d = new DistributedTransaction();
-            Transaction[] transactions = new Transaction[2];
-            transactions[0] = GenerateTransaction(0, "Z", "X", 69);
-            transactions[1] = GenerateTransaction(1, "X","Y", 20);
-            d.setTransactions(transactions);
-
-            Integer chNumber = randomGenerator.nextInt(2);
-            if (id != chNumber) {
-                op.setType(OperationType.READ);
-                op.setValue("X");
-                send(chNumber, op);
-                System.out.println("Process " + id + " pushed " + op.getType() + " to " + chNumber + " channel");
-
-
-            }
 
         }
         //reading phase
