@@ -3,6 +3,20 @@ package im.yuri.jcom;
 import im.yuri.jcom.util.OperationType;
 
 public class Operation {
+    private OperationType type;
+    private String property;
+    private Integer node;
+    private Integer value;
+
+    public Operation(OperationType type, String property) {
+        this.type = type;
+        this.property = property;
+    }
+
+    public Operation() {
+
+    }
+
     public OperationType getType() {
         return type;
     }
@@ -11,11 +25,11 @@ public class Operation {
         this.type = type;
     }
 
-    public String getValue() {
+    public Integer getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Integer value) {
         this.value = value;
     }
 
@@ -27,15 +41,13 @@ public class Operation {
         this.node = node;
     }
 
-    private OperationType type;
-    private String value;
-    private Integer node;
-    public Operation(OperationType type, String value) {
-        this.type = type;
-        this.value = value;
+    public String getProperty() {
+        return property;
     }
 
-    public Operation() {
-
+    public void setProperty(String property) {
+        this.property = property;
     }
+
+
 }

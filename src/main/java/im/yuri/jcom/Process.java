@@ -24,7 +24,15 @@ public class Process implements Runnable {
         //writing phase
         Operation op = new Operation();
         for (int i = 0; i <= 1; i++) {
-            //writing to random channels 5 times
+            // todo:
+            // write generator of transactions
+
+            DistributedTransaction d = new DistributedTransaction();
+            Transaction[] transactions = new Transaction[2];
+            transactions[0] = GenerateTransaction(0, "Z", "X", 69);
+            transactions[1] = GenerateTransaction(1, "X","Y", 20);
+            d.setTransactions(transactions);
+
             Integer chNumber = randomGenerator.nextInt(2);
             if (id != chNumber) {
                 op.setType(OperationType.READ);
@@ -48,6 +56,39 @@ public class Process implements Runnable {
             }
 
         }
+    }
+
+    private Transaction GenerateTransaction(Integer node, String property1, String property2, Integer value) {
+        Transaction t = new Transaction();
+        t.setNode(node);
+        Operation op1 = new Operation();
+        op1.setType(OperationType.READ);
+        op1.setProperty(property1);
+        Operation op2 = new Operation();
+        op2.setType(OperationType.WRITE);
+        op2.setProperty(property2);
+        op2.setValue(value);
+        Operation[] ops = new Operation[2];
+        ops[0] = op1;
+        ops[1] = op2;
+        t.setOperations(ops);
+        return t;
+    }
+
+    private void GenerateTransacation1() {
+        Transaction t1 = new Transaction();
+        t1.setNode(1);
+        Operation op1 = new Operation();
+        op1.setType(OperationType.READ);
+        op1.setProperty("X");
+        Operation op2 = new Operation();
+        op2.setType(OperationType.WRITE);
+        op2.setProperty("Y");
+        op2.setValue(20);
+        Operation[] ops = new Operation[2];
+        ops[0] = op1;
+        ops[1] = op2;
+        t1.setOperations(ops);
     }
 
     private Operation read(Integer node) {
