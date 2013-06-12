@@ -3,18 +3,18 @@ package im.yuri.jcom;
 import java.util.ArrayList;
 
 public class Channel {
-    public ArrayList<Operation> stack;
+    public ArrayList<Transaction> stack;
 
 
     public Channel() {
-        stack = new ArrayList<Operation>();
+        stack = new ArrayList<Transaction>();
     }
 
-    public void push(Operation item) {
+    public void push(Transaction item) {
         stack.add(item);
 
     }
-    public Operation pull() {
+    public Transaction pull() {
         if (!stack.isEmpty())
             return stack.remove(0);
         else
@@ -22,7 +22,7 @@ public class Channel {
     }
 
     public void inspect() {
-        for (Operation o: stack) {
+        for (Transaction o: stack) {
             System.out.print(o + " ");
         }
     }

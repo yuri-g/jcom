@@ -34,7 +34,7 @@ public class Transaction {
     }
 
     public Transaction() {
-        id = UUID.randomUUID();
+
     }
 
 

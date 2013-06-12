@@ -29,21 +29,18 @@ public class Process implements Runnable {
         transactions[0] = GenerateTransaction(0, "Z", "X", 69);
         transactions[1] = GenerateTransaction(1, "X","Y", 20);
         d.setTransactions(transactions);
-
-        //writing phase
-        for (int i = 0; i <= 1; i++) {
-
+        //sending phase
+        for (Transaction t : d.getTransactions() ) {
+                send(t.getNode(), t);
+                System.out.println("Sent transaction " + t.getId() + " to node " + t.getNode() + " [process " + id + "]");
         }
+
         //reading phase
         for (int i = 0; i <= 1; i++) {
-            if (id != i) {
-                Operation result = read(i);
+                Transaction result = read(i);
                 if (result != null) {
-                    System.out.println("Process " + id + " got " + result.getType() + " from " + i);
+                    System.out.println("Got transaction " + result.getId() + " from node " + result.getNode() + " [process " + id + "]");
                 }
-
-
-            }
 
         }
     }
@@ -65,28 +62,12 @@ public class Process implements Runnable {
         return t;
     }
 
-    private void GenerateTransacation1() {
-        Transaction t1 = new Transaction();
-        t1.setNode(1);
-        Operation op1 = new Operation();
-        op1.setType(OperationType.READ);
-        op1.setProperty("X");
-        Operation op2 = new Operation();
-        op2.setType(OperationType.WRITE);
-        op2.setProperty("Y");
-        op2.setValue(20);
-        Operation[] ops = new Operation[2];
-        ops[0] = op1;
-        ops[1] = op2;
-        t1.setOperations(ops);
-    }
-
-    private Operation read(Integer node) {
+    private Transaction read(Integer node) {
         return channels[node][this.id].pull();
     }
 
-    private void send(Integer node, Operation operation) {
-        this.channels[this.id][node].push(operation);
+    private void send(Integer node, Transaction transaction) {
+        this.channels[this.id][node].push(transaction);
     }
 
 }
