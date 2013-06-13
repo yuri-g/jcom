@@ -10,7 +10,10 @@ public class App
     public static Process[] processes;
     public static void main( String[] args )
     {
-        Float faultProbability = Float.parseFloat(args[0]);
+//        Float faultProbability = Float.parseFloat(args[0]);
+        //todo:
+        // remove this!
+        Float faultProbability = 0.1f;
         channels = new Channel[5][5];
         processes = new Process[5];
         for (int i = 0; i < 5; i++) {
@@ -19,7 +22,7 @@ public class App
             }
         }
         for (int i = 0; i < 2; i++) {
-            processes[i] = new Process(i, channels);
+            processes[i] = new Process(i, channels, faultProbability);
             (new Thread(processes[i])).start();
         }
 

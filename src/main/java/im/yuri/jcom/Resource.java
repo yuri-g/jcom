@@ -17,11 +17,39 @@ public class Resource {
     public Resource(Integer id) {
         properties = new HashMap();
         this.id = id;
-        properties.put("X", randomGenerator.nextInt(20));
-        properties.put("Y", randomGenerator.nextInt(75));
-        properties.put("Z", randomGenerator.nextInt(200));
+        properties.put("X", randomGenerator.nextInt(10));
+        properties.put("Y", randomGenerator.nextInt(10));
+        properties.put("Z", randomGenerator.nextInt(10));
+        saveResource();
+    }
+
+    public boolean setValue(String property, Integer newValue, Float fault) {
+        if (randomGenerator.nextFloat() < fault) {
+            return false;
+        }
+        else {
+            reloadResource();
+            this.properties.put(property, newValue);
+            //need to rewrite because of transactions
+            //first, make all actions, get COMMIT and then save
+            saveResource();
+            return true;
+        }
+    }
+
+    private void saveResource() {
         try {
-            Yaml.dump(properties, new File("resource " + id + ".xml"));
+            Yaml.dump(this.properties, new File("resource " + id + ".xml"));
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //gets values from YAML file
+    private void reloadResource() {
+        try {
+            this.properties = Yaml.loadType(new File("resource " + this.id + ".xml"), HashMap.class);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -29,12 +57,7 @@ public class Resource {
     }
 
     public Integer getValue(String property) {
-        try {
-            properties = Yaml.loadType(new File("resource " + this.id + ".xml"), HashMap.class);
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return (Integer)properties.get(property);
+        reloadResource();
+        return (Integer)this.properties.get(property);
     }
 }

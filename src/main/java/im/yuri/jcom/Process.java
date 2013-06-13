@@ -24,8 +24,6 @@ public class Process implements Runnable {
         resource = new Resource(this.id);
         Random randomGenerator = new Random();
 
-        // todo:
-        // write generator of transactions
         if (this.id == 0) {
             DistributedTransaction d = new DistributedTransaction();
             Transaction[] transactions = new Transaction[2];
@@ -60,10 +58,11 @@ public class Process implements Runnable {
             OperationType type = o.getType();
             switch (type) {
                 case READ:
-
                     System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
                     break;
                 case WRITE:
+                    System.out.println(o.getProperty() + o.getValue());
+                    resource.setValue(o.getProperty(), o.getValue(), faultProbability);
                     System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
                     break;
             }
