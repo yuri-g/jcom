@@ -1,9 +1,6 @@
 package im.yuri.jcom;
 
-/**
- * Hello world!
- *
- */
+
 public class App
 {
     public static Channel[][] channels;
@@ -13,7 +10,7 @@ public class App
 //        Float faultProbability = Float.parseFloat(args[0]);
         //todo:
         // remove this!
-        Float faultProbability = 0.1f;
+        Float faultProbability = 0.5f;
         channels = new Channel[5][5];
         processes = new Process[5];
         for (int i = 0; i < 5; i++) {

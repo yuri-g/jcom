@@ -61,9 +61,14 @@ public class Process implements Runnable {
                     System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
                     break;
                 case WRITE:
-                    System.out.println(o.getProperty() + o.getValue());
-                    resource.setValue(o.getProperty(), o.getValue(), faultProbability);
-                    System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                    if (resource.setValue(o.getProperty(), o.getValue(), faultProbability)) {
+                        System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                    }
+                    else {
+                        System.out.println("Error while writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                    }
+
+
                     break;
             }
         }
