@@ -10,11 +10,13 @@ import java.util.Random;
 
 public class Resource {
     private HashMap properties;
-    Random randomGenerator = new Random();
+    private Random randomGenerator = new Random();
+    private Integer id;
+
 
     public Resource(Integer id) {
         properties = new HashMap();
-
+        this.id = id;
         properties.put("X", randomGenerator.nextInt(20));
         properties.put("Y", randomGenerator.nextInt(75));
         properties.put("Z", randomGenerator.nextInt(200));
@@ -24,7 +26,15 @@ public class Resource {
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
 
-
+    public Integer getValue(String property) {
+        try {
+            properties = Yaml.loadType(new File("resource " + this.id + ".xml"), HashMap.class);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return (Integer)properties.get(property);
     }
 }

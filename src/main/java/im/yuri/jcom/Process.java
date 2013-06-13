@@ -24,25 +24,45 @@ public class Process implements Runnable {
 
         // todo:
         // write generator of transactions
-        DistributedTransaction d = new DistributedTransaction();
-        Transaction[] transactions = new Transaction[2];
-        transactions[0] = GenerateTransaction(0, "Z", "X", 69);
-        transactions[1] = GenerateTransaction(1, "X","Y", 20);
-        d.setTransactions(transactions);
-        //sending phase
-        for (Transaction t : d.getTransactions() ) {
+        if (this.id == 0) {
+            DistributedTransaction d = new DistributedTransaction();
+            Transaction[] transactions = new Transaction[2];
+            transactions[0] = GenerateTransaction(0, "Z", "X", 69);
+            transactions[1] = GenerateTransaction(1, "X","Y", 20);
+            d.setTransactions(transactions);
+            //sending phase
+            for (Transaction t : d.getTransactions() ) {
                 send(t.getNode(), t);
-                System.out.println("Sent transaction " + t.getId() + " to node " + t.getNode() + " [process " + id + "]");
+                System.out.println("Sent transaction " + t.getId().toString().substring(0, 4) + " to node " + t.getNode() + " [process " + id + "]");
+            }
+
         }
 
         //reading phase
-        for (int i = 0; i <= 1; i++) {
+        while(true) {
+            for (int i = 0; i <= 1; i++) {
                 Transaction result = read(i);
                 if (result != null) {
-                    System.out.println("Got transaction " + result.getId() + " from node " + result.getNode() + " [process " + id + "]");
+                    System.out.println("Got transaction " + result.getId().toString().substring(0, 4) + " from node " + result.getNode() + " [process " + id + "]");
+                    execute(result.getOperations());
                 }
 
+            }
         }
+
+
+    }
+
+    private boolean execute(Operation[] operations) {
+        for (Operation o : operations) {
+            OperationType type = o.getType();
+            if (type == OperationType.READ) {
+                System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
+            }
+        }
+
+
+        return true;
     }
 
     private Transaction GenerateTransaction(Integer node, String property1, String property2, Integer value) {
