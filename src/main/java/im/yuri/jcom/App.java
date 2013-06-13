@@ -10,6 +10,7 @@ public class App
     public static Process[] processes;
     public static void main( String[] args )
     {
+        Float faultProbability = Float.parseFloat(args[0]);
         channels = new Channel[5][5];
         processes = new Process[5];
         for (int i = 0; i < 5; i++) {

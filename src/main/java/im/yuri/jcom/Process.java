@@ -13,9 +13,11 @@ public class Process implements Runnable {
     private Channel[][] channels;
     private Resource resource;
     private Integer id;
-    public Process(Integer id, Channel[][] channels) {
+    private Float faultProbability;
+    public Process(Integer id, Channel[][] channels, Float faultProbability) {
       this.id = id;
       this.channels = channels;
+      this.faultProbability = faultProbability;
     }
 
     public void run() {
@@ -56,8 +58,14 @@ public class Process implements Runnable {
     private boolean execute(Operation[] operations) {
         for (Operation o : operations) {
             OperationType type = o.getType();
-            if (type == OperationType.READ) {
-                System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
+            switch (type) {
+                case READ:
+
+                    System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
+                    break;
+                case WRITE:
+                    System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                    break;
             }
         }
 
