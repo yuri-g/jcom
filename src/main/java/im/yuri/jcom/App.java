@@ -5,7 +5,7 @@ public class App
 {
     public static Channel[][] channels;
     public static Process[] processes;
-    public static void main( String[] args )
+    public static void main(String[] args)
     {
 //        Float faultProbability = Float.parseFloat(args[0]);
         //todo:

@@ -6,6 +6,7 @@ public class DistributedTransaction {
 
     private Transaction[] transactions;
     private UUID id;
+    private Integer[] participants;
 
     public DistributedTransaction() {
         id = UUID.randomUUID();
@@ -20,6 +21,14 @@ public class DistributedTransaction {
         for (Transaction t : transactions) {
             t.setId(id);
         }
+    }
+
+    public Integer[] getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(Integer[] participants) {
+        this.participants = participants;
     }
 
 
