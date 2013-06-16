@@ -4,6 +4,7 @@ import im.yuri.jcom.util.OperationType;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Random;
@@ -15,13 +16,13 @@ public class Process implements Runnable {
     private Resource resource;
     private Integer id;
     private Float faultProbability;
-    private HashMap<UUID, Boolean> errors;
+    private HashMap<String, Boolean> errors;
     private DistributedTransaction currentTransaction;
     public Process(Integer id, Channel[][] channels, Float faultProbability) {
       this.id = id;
       this.channels = channels;
       this.faultProbability = faultProbability;
-        errors = new HashMap<UUID, Boolean>();
+        errors = new HashMap<String, Boolean>();
     }
 
     public void run() {
@@ -53,6 +54,19 @@ public class Process implements Runnable {
                             execute(tr);
                             startVoting();
                         }
+                        else if (result.getClass() == Operation.class) {
+                            Operation op = (Operation)result;
+                            if (op.getType() == OperationType.VOTE_REQUEST);
+                            {
+                                if (errors.get(op.getProperty()) != null) {
+                                    System.out.println("Vote: no");
+                                }
+                                else {
+                                    System.out.println("Vote: yes");
+                                }
+                            }
+
+                        }
 
                     }
 
@@ -67,7 +81,9 @@ public class Process implements Runnable {
         //if currentTransaction != null it means that this node initiated this transaction
         if (currentTransaction != null) {
             for (Integer node: currentTransaction.getParticipants()) {
-                send(node, new Operation(OperationType.VOTE_REQUEST, " "));
+                System.out.println("Sending vote requests to:");
+                System.out.println(Arrays.toString(currentTransaction.getParticipants()));
+                send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString()));
             }
         }
     }
@@ -85,7 +101,7 @@ public class Process implements Runnable {
                     }
                     else {
                         System.out.println("Error while writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
-                        errors.put(transaction.getId(), true);
+                        errors.put(transaction.getId().toString(), true);
                     }
                     break;
             }

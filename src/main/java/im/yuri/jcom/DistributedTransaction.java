@@ -5,6 +5,15 @@ import java.util.UUID;
 public class DistributedTransaction {
 
     private Transaction[] transactions;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     private UUID id;
     private Integer[] participants;
 
