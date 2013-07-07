@@ -2,10 +2,15 @@ package im.yuri.jcom;
 
 import im.yuri.jcom.util.ErrorsMap;
 import im.yuri.jcom.util.OperationType;
-
-import java.util.Arrays;
-
 import static im.yuri.jcom.util.Helpers.*;
+
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.*;
+
+import org.yaml.snakeyaml.*;
 
 public class Process implements Runnable {
 
@@ -15,22 +20,27 @@ public class Process implements Runnable {
     private Integer id;
     private Float faultProbability;
     private ErrorsMap errors;
+//    private ArrayList<DistributedTransaction> transactions;
     private DistributedTransaction currentTransaction;
     public Process(Integer id, Channel[][] channels, Float faultProbability) {
       this.id = id;
       this.channels = channels;
       this.faultProbability = faultProbability;
-        errors = new ErrorsMap();
+      errors = new ErrorsMap();
     }
 
     public void run() {
         resource = new Resource(this.id);
+        //doesnt really do anything right now
+        generateTransactions();
+//        right now the node with id==0 is the only one that creates transactions
         if (this.id == 0) {
+
             currentTransaction = new DistributedTransaction();
             currentTransaction.setParticipants(new Integer[]{0, 1});
             Transaction[] transactions = new Transaction[2];
-            transactions[0] = GenerateTransaction(0, "Z", "X", 69);
-            transactions[1] = GenerateTransaction(1, "X","Y", 20);
+            transactions[0] = generateTransaction(0, "Z", "X", 69);
+            transactions[1] = generateTransaction(1, "X", "Y", 20);
             currentTransaction.setTransactions(transactions);
             //sending phase
             for (Transaction t : currentTransaction.getTransactions() ) {
@@ -56,7 +66,7 @@ public class Process implements Runnable {
                             if (op.isVoteRequest())
                             {
                                 if (errors.any(op)){
-                                    vote(new Operation(OperationType.VOTE, "NO", this.id, transactionId), op.getNode());
+                                    vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
                                     System.out.println("Vote: no");
                                 } else {
                                     System.out.println("Vote: yes");
@@ -74,6 +84,60 @@ public class Process implements Runnable {
 
 
             }
+    }
+
+    private void generateTransactions() {
+        Object transactions = loadTransactions();
+        LinkedHashMap<String, ArrayList<Object>> parsedTransactions = (LinkedHashMap<String, ArrayList<Object>>) transactions;
+        Iterator it = parsedTransactions.values().iterator();
+        while(it.hasNext()) {
+            ArrayList<Object> t = (ArrayList<Object>) it.next();
+            for(Object o: t) {
+                HashMap<String, Object> innerTransaction = (HashMap<String, Object>) o;
+                Integer who = (Integer) innerTransaction.get("who");
+                ArrayList<Object> operations = (ArrayList<Object>) innerTransaction.get("operations");
+                for (Object op: operations) {
+                    HashMap<String, String> parsedOperation = (HashMap<String, String>) op;
+                    String type = parsedOperation.get("type");
+                    String value = parsedOperation.get("value");
+                    String delimeters = "[ ]+";
+                    String[] tokens = value.split(delimeters);
+                    String property;
+                    String parsedValue = "";
+                    String resource = tokens[2];
+                    if (type.equals("write")) {
+                        delimeters = "[=]";
+                        String[] writeTokens = tokens[0].split(delimeters);
+                        property = writeTokens[0];
+                        parsedValue = writeTokens[1];
+                    }
+                    else {
+                        property = tokens[0];
+                    }
+                    System.out.println("Type: " + type + "; Property: " + property + "; Value: " + parsedValue + "; Resource: " + resource);
+
+            }
+        }
+        }
+    }
+
+
+    private void parseTransactions(Object transactions) {
+
+
+    }
+
+    private Object loadTransactions() {
+        Object o = new Object();
+        Yaml yaml = new Yaml();
+        try {
+             o = yaml.load(new FileInputStream("transactions.yaml"));
+
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return o;
     }
 
     private void vote(Operation answer, Integer node) {
@@ -131,14 +195,14 @@ public class Process implements Runnable {
             for (Integer node: currentTransaction.getParticipants()) {
                 System.out.println("Sending vote requests to:");
                 System.out.println(Arrays.toString(currentTransaction.getParticipants()));
-                send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, transactionId));
+                send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
             }
         }
     }
 
 
 
-    private Transaction GenerateTransaction(Integer node, String property1, String property2, Integer value) {
+    private Transaction generateTransaction(Integer node, String property1, String property2, Integer value) {
         Transaction t = new Transaction();
         t.setNode(node);
         Operation op1 = new Operation();

@@ -16,5 +16,7 @@ public class Helpers {
     public static void logSendTransaction(Transaction transaction, Integer id) {
         System.out.println("Sent transaction " + transaction.getId().toString().substring(0, 4) + " to node " + transaction.getNode() + " [process " + id + "]");
     }
+
+
 //    public static void logGetVote()
 }

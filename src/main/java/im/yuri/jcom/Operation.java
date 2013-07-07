@@ -9,11 +9,20 @@ public class Operation {
     private Integer value;
     private String transactionId;
 
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
     public Operation(OperationType type, String property, Integer id, String transactionId) {
         this.type = type;
         this.property = property;
         this.node = id;
         this.transactionId = transactionId;
+
     }
 
     public Operation() {

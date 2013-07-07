@@ -39,7 +39,7 @@ public class Resource {
 
     private void saveResource() {
         try {
-            Yaml.dump(this.properties, new File("resource " + id + ".xml"));
+            Yaml.dump(this.properties, new File("resource " + id + ".yaml"));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -49,7 +49,7 @@ public class Resource {
     //gets values from YAML file
     private void reloadResource() {
         try {
-            this.properties = Yaml.loadType(new File("resource " + this.id + ".xml"), HashMap.class);
+            this.properties = Yaml.loadType(new File("resource " + this.id + ".yaml"), HashMap.class);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
