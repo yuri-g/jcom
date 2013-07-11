@@ -17,9 +17,9 @@ public class Resource {
     public Resource(Integer id) {
         properties = new HashMap();
         this.id = id;
-        properties.put("X", randomGenerator.nextInt(10));
-        properties.put("Y", randomGenerator.nextInt(10));
-        properties.put("Z", randomGenerator.nextInt(10));
+        properties.put("x", randomGenerator.nextInt(10));
+        properties.put("y", randomGenerator.nextInt(10));
+        properties.put("z", randomGenerator.nextInt(10));
         saveResource();
     }
 

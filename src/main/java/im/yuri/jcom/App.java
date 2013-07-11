@@ -22,17 +22,8 @@ public class App
             }
         }
         ExecutorService executor = Executors.newFixedThreadPool(2);
-//        executor.setKeepAliveTime(4, TimeUnit.SECONDS);
         for (int i = 0; i < 2; i++) {
-//            processes[i] = new Process(i, channels, faultProbability);
             executor.submit(new Process(i, channels, faultProbability));
-//            executor.
-//            executor.submit()
-
-
-
-             //            executor.submit(new Process(i, channels, faultProbability)).get(10, TimeUnit.SECONDS);
-//            (new Thread(processes[i])).start();
         }
 
     }

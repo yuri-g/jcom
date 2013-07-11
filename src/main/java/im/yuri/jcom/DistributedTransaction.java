@@ -1,5 +1,6 @@
 package im.yuri.jcom;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class DistributedTransaction {
@@ -15,7 +16,6 @@ public class DistributedTransaction {
     }
 
     private UUID id;
-    private Integer[] participants;
 
     public DistributedTransaction() {
         id = UUID.randomUUID();
@@ -32,12 +32,12 @@ public class DistributedTransaction {
         }
     }
 
-    public Integer[] getParticipants() {
+    public ArrayList<Integer> getParticipants() {
+        ArrayList<Integer> participants = new ArrayList<>();
+        for(Transaction t: transactions) {
+            participants.add(t.getNode());
+        }
         return participants;
-    }
-
-    public void setParticipants(Integer[] participants) {
-        this.participants = participants;
     }
 
 
