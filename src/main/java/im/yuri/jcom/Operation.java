@@ -6,6 +6,7 @@ public class Operation {
     private OperationType type;
     private String property;
     private Integer node;
+    private String resource;
     private Integer value;
     private String transactionId;
 
@@ -59,6 +60,15 @@ public class Operation {
 
     public void setProperty(String property) {
         this.property = property;
+    }
+
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
     public boolean isVoteRequest() {

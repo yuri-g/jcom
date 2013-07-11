@@ -3,7 +3,7 @@ package im.yuri.jcom;
 import java.util.ArrayList;
 
 public class Channel {
-    public ArrayList<Object> stack;
+    private ArrayList<Object> stack;
 
 
     public Channel() {
@@ -25,5 +25,9 @@ public class Channel {
         for (Object o: stack) {
             System.out.print(o + " ");
         }
+    }
+
+    public boolean isEmpty() {
+        return stack.isEmpty();
     }
 }

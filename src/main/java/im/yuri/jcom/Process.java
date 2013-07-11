@@ -5,7 +5,6 @@ import im.yuri.jcom.util.OperationType;
 import static im.yuri.jcom.util.Helpers.*;
 
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -19,6 +18,8 @@ public class Process implements Runnable {
     private Resource resource;
     private Integer id;
     private Float faultProbability;
+    private Random randomGenerator;
+    private Queue<Object> executionQueue;
     private ErrorsMap errors;
 //    private ArrayList<DistributedTransaction> transactions;
     private DistributedTransaction currentTransaction;
@@ -27,15 +28,22 @@ public class Process implements Runnable {
       this.channels = channels;
       this.faultProbability = faultProbability;
       errors = new ErrorsMap();
+        randomGenerator = new Random();
+        executionQueue = new LinkedList();
+    }
+
+    public void stop() {
+        System.out.println("no");
     }
 
     public void run() {
         resource = new Resource(this.id);
-        //doesnt really do anything right now
-        generateTransactions();
-//        right now the node with id==0 is the only one that creates transactions
-        if (this.id == 0) {
 
+
+        //right now the node with id==0 is the only one that creates transactions
+        if (this.id == 0) {
+            //doesnt really do anything right now
+            generateTransactions("transactions.yaml");
             currentTransaction = new DistributedTransaction();
             currentTransaction.setParticipants(new Integer[]{0, 1});
             Transaction[] transactions = new Transaction[2];
@@ -51,73 +59,126 @@ public class Process implements Runnable {
         }
 
         //reading phase
+
         while(true) {
-            for (int i = 0; i <= 1; i++) {
-                Object result = read(i);
-                if (result != null) {
-                        if (isTransaction(result)) {
-                            Transaction tr = (Transaction)result;
-                            logGetTransaction(tr, this.id);
-                            execute(tr);
-                            startVoting();
-                        }
-                        else if (isOperation(result)) {
-                            Operation op = (Operation) result;
-                            if (op.isVoteRequest())
-                            {
-                                if (errors.any(op)){
-                                    vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
-                                    System.out.println("Vote: no");
-                                } else {
-                                    System.out.println("Vote: yes");
-                                }
-                            }
-                            else if (op.isVote()) {
-
-                            }
-
-                        }
-
+            if (!channelIsEmpty()) {
+                for (int i = 0; i <= 1; i++) {
+                    Object result = read(i);
+                    if (result != null) {
+                        executionQueue.add(result);
                     }
+                }
+            }
+            else {
+                try {
+                    Thread.sleep(500);
+                    System.out.println(Thread.currentThread().getId() + ": waiting.");
+                    if (channelIsEmpty()) {
+                        System.out.println(Thread.currentThread().getId() + ": channel is empty, waiting");
+                        Thread.sleep(1000);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            execute(executionQueue);
+        }
+
+   }
+
+    private boolean channelIsEmpty() {
+
+        for(int i = 0; i <= 1; i++) {
+            if (!channels[i][this.id].isEmpty()) {
+                return false;
+            }
+
+        }
+        return true;
+    }
+
+
+    private void execute(Queue<Object> executionQueue) {
+        Iterator<Object> i = executionQueue.iterator();
+        while (i.hasNext()) {
+            Object o = i.next();
+            if (isTransaction(o)) {
+                Transaction tr = (Transaction)o;
+                logGetTransaction(tr, this.id);
+                executeTransaction(tr);
+                startVoting();
+            }
+            else if (isOperation(o)) {
+                Operation op = (Operation) o;
+                if (op.isVoteRequest())
+                {
+                    if (errors.any(op)){
+                        vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
+                        System.out.println(Thread.currentThread().getId() + ": vote: no");
+                    } else {
+                        System.out.println(Thread.currentThread().getId() + ": vote: yes");
+                    }
+                }
+                else if (op.isVote()) {
 
                 }
 
-
             }
-    }
+            i.remove();
+        }
+        }
 
-    private void generateTransactions() {
-        Object transactions = loadTransactions();
-        LinkedHashMap<String, ArrayList<Object>> parsedTransactions = (LinkedHashMap<String, ArrayList<Object>>) transactions;
-        Iterator it = parsedTransactions.values().iterator();
-        while(it.hasNext()) {
-            ArrayList<Object> t = (ArrayList<Object>) it.next();
-            for(Object o: t) {
+
+
+
+
+
+    private void generateTransactions(String fileName) {
+        Object parseTransactions = loadTransactions(fileName);
+        DistributedTransaction distributedTransaction = new DistributedTransaction();
+        ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+        LinkedHashMap<String, ArrayList<Object>> parsedTransactions = (LinkedHashMap<String, ArrayList<Object>>) parseTransactions;
+        for (ArrayList<Object> t : parsedTransactions.values()) {
+            for (Object o : t) {
+
+                System.out.println(o);
                 HashMap<String, Object> innerTransaction = (HashMap<String, Object>) o;
+                Transaction finalTransaction = new Transaction();
                 Integer who = (Integer) innerTransaction.get("who");
+                ArrayList<Operation> finalOperations = new ArrayList<Operation>();
                 ArrayList<Object> operations = (ArrayList<Object>) innerTransaction.get("operations");
-                for (Object op: operations) {
+                for (Object op : operations) {
+
+                    Operation operation = new Operation();
                     HashMap<String, String> parsedOperation = (HashMap<String, String>) op;
+                    operation.setType(getOperationType(parsedOperation.get("type")));
                     String type = parsedOperation.get("type");
                     String value = parsedOperation.get("value");
                     String delimeters = "[ ]+";
                     String[] tokens = value.split(delimeters);
-                    String property;
-                    String parsedValue = "";
-                    String resource = tokens[2];
+                    operation.setValue(null);
+                    operation.setResource(tokens[2]);
                     if (type.equals("write")) {
                         delimeters = "[=]";
                         String[] writeTokens = tokens[0].split(delimeters);
-                        property = writeTokens[0];
-                        parsedValue = writeTokens[1];
+                        operation.setProperty(writeTokens[0]);
+                        operation.setValue(Integer.parseInt(writeTokens[1]));
+                    } else {
+                        operation.setProperty(tokens[0]);
                     }
-                    else {
-                        property = tokens[0];
-                    }
-                    System.out.println("Type: " + type + "; Property: " + property + "; Value: " + parsedValue + "; Resource: " + resource);
+                    finalOperations.add(operation);
+                    Operation[] operationsArray = new Operation[finalOperations.size()];
+                    finalTransaction.setOperations(finalOperations.toArray(operationsArray));
 
+
+                }
+                transactions.add(finalTransaction);
+
+
+//                distributedTransaction.setTransactions(transactions);
             }
-        }
+            Transaction[] transactionsArray = new Transaction[transactions.size()];
+            distributedTransaction.setTransactions(transactions.toArray(transactionsArray));
         }
     }
 
@@ -127,11 +188,11 @@ public class Process implements Runnable {
 
     }
 
-    private Object loadTransactions() {
+    private Object loadTransactions(String filename) {
         Object o = new Object();
         Yaml yaml = new Yaml();
         try {
-             o = yaml.load(new FileInputStream("transactions.yaml"));
+             o = yaml.load(new FileInputStream(filename));
 
         }
         catch (FileNotFoundException e) {
@@ -167,7 +228,7 @@ public class Process implements Runnable {
 
 
 
-    private boolean execute(Transaction transaction) {
+    private boolean executeTransaction(Transaction transaction) {
         for (Operation o : transaction.getOperations()) {
             OperationType type = o.getType();
             switch (type) {

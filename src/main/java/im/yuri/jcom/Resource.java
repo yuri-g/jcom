@@ -52,6 +52,7 @@ public class Resource {
             this.properties = Yaml.loadType(new File("resource " + this.id + ".yaml"), HashMap.class);
         }
         catch (FileNotFoundException e) {
+
             e.printStackTrace();
         }
     }

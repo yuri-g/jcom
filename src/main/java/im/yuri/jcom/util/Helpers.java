@@ -11,12 +11,30 @@ public class Helpers {
         return result.getClass() == Operation.class;
     }
     public static void logGetTransaction(Transaction transaction, Integer id) {
-        System.out.println("Got transaction " + transaction.getId().toString().substring(0, 4) + " from node " + transaction.getNode() + " [process " + id + "]");
+        System.out.println(Thread.currentThread().getId() + ": got transaction " + transaction.getId().toString().substring(0, 4) + " from node " + transaction.getNode());
     }
     public static void logSendTransaction(Transaction transaction, Integer id) {
-        System.out.println("Sent transaction " + transaction.getId().toString().substring(0, 4) + " to node " + transaction.getNode() + " [process " + id + "]");
+        System.out.println(Thread.currentThread().getId() + ": sent transaction " + transaction.getId().toString().substring(0, 4) + " to node " + transaction.getNode());
     }
 
+    public static OperationType getOperationType(String type) {
+        OperationType operationType = null;
+        switch (type) {
+            case "write":
+                operationType = OperationType.WRITE;
+                break;
+            case "read":
+                operationType = OperationType.READ;
+                break;
+            case "vote":
+                operationType = OperationType.VOTE;
+                break;
+            case "vote_request":
+                operationType = OperationType.VOTE_REQUEST;
+                break;
+        }
+        return operationType;
 
+    }
 //    public static void logGetVote()
 }
