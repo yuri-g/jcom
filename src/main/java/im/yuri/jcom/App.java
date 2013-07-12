@@ -13,7 +13,7 @@ public class App
 //        Float faultProbability = Float.parseFloat(args[0]);
         //todo:
         // remove this!
-        Float faultProbability = .5f;
+        Float faultProbability = .2f;
         channels = new Channel[5][5];
         processes = new Process[5];
         for (int i = 0; i < 5; i++) {

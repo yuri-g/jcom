@@ -4,5 +4,8 @@ public enum OperationType {
     READ,
     WRITE,
     VOTE_REQUEST,
-    VOTE
+    VOTE,
+    ABORT,
+    COMMIT,
+    ACK
 }

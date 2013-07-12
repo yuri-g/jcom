@@ -7,6 +7,18 @@ public class DistributedTransaction {
 
     private Transaction[] transactions;
 
+    public Integer getNode() {
+        return node;
+    }
+
+    public void setNode(Integer node) {
+        for (Transaction t: transactions) {
+            t.setParentNode(node);
+        }
+    }
+
+    private Integer node;
+
     public UUID getId() {
         return id;
     }

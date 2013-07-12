@@ -5,12 +5,7 @@ import im.yuri.jcom.util.OperationType;
 import static im.yuri.jcom.util.Helpers.*;
 import static im.yuri.jcom.util.TransactionParser.*;
 
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.*;
-
-import org.yaml.snakeyaml.*;
 
 public class Process implements Runnable {
 
@@ -18,18 +13,20 @@ public class Process implements Runnable {
     private Resource resource;
     private Integer id;
     private Float faultProbability;
-    private Queue<Object> executionQueue;
+    private ArrayList<Object> executionQueue;
     private ErrorsMap errors;
     private Integer wastedTime;
     private DistributedTransaction currentTransaction;
+    private ArrayList<String> votes;
 
     public Process(Integer id, Channel[][] channels, Float faultProbability) {
         this.id = id;
         this.channels = channels;
         this.faultProbability = faultProbability;
         errors = new ErrorsMap();
-        executionQueue = new LinkedList();
+        executionQueue = new ArrayList<>();
         wastedTime = 0;
+        votes = new ArrayList<String>();
     }
 
     public void run() {
@@ -38,13 +35,8 @@ public class Process implements Runnable {
 
         //right now the node with id==0 is the only one that creates transactions
         if (this.id == 0) {
-            //doesnt really do anything right now
             currentTransaction = parse("transactions.yaml");
-//            currentTransaction.setParticipants(new Integer[]{0, 1});
-//            Transaction[] transactions = new Transaction[2];
-//            transactions[0] = generateTransaction(0, "Z", "X", 69);
-//            transactions[1] = generateTransaction(1, "X", "Y", 20);
-//            currentTransaction.setTransactions(transactions);
+            currentTransaction.setNode(this.id);
             //sending phase
             for (Transaction t : currentTransaction.getTransactions() ) {
                 send(t.getNode(), t);
@@ -57,8 +49,6 @@ public class Process implements Runnable {
 
         while(true) {
             if (!Thread.currentThread().isInterrupted()) {
-
-
                 if (!channelIsEmpty()) {
                     for (int i = 0; i <= 1; i++) {
                         Object result = read(i);
@@ -83,6 +73,28 @@ public class Process implements Runnable {
                     }
                 }
                 execute(executionQueue);
+                if (currentTransaction != null) {
+                    if(checkVotes()) {
+                        Operation o = new Operation();
+
+                        if(decideCommit()) {
+                            o.setType(OperationType.COMMIT);
+                            broadcast(o, currentTransaction.getParticipants());
+                            System.out.println("got all YES, commit!");
+
+                        }
+                        else
+                        {
+                            o.setType(OperationType.ABORT);
+                            broadcast(o, currentTransaction.getParticipants());
+                            System.out.println("got NO, aborting!");
+                        }
+                        currentTransaction = null;
+                    }
+
+                }
+
+
             }
             else {
                 System.out.println(Thread.currentThread().getId() + " is dead now.");
@@ -90,6 +102,25 @@ public class Process implements Runnable {
         }
 
    }
+
+    private void broadcast(Object o, ArrayList<Integer> participants) {
+        for(Integer node: participants) {
+            send(node, o);
+        }
+    }
+
+    private boolean decideCommit() {
+        for (String vote: votes) {
+            if (vote.equals("NO")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkVotes() {
+        return currentTransaction.getParticipants().size() == votes.size();
+    }
 
     private boolean channelIsEmpty() {
 
@@ -103,15 +134,19 @@ public class Process implements Runnable {
     }
 
 
-    private void execute(Queue<Object> executionQueue) {
+    private void execute(ArrayList<Object> executionQueue) {
         Iterator<Object> i = executionQueue.iterator();
         while (i.hasNext()) {
             Object o = i.next();
+            System.out.println(o);
             if (isTransaction(o)) {
                 Transaction tr = (Transaction)o;
                 logGetTransaction(tr, this.id);
                 executeTransaction(tr);
-                startVoting();
+                if (tr.getParentNode().equals(this.id)) {
+                    startVoting();
+                }
+
             }
             else if (isOperation(o)) {
                 Operation op = (Operation) o;
@@ -121,24 +156,26 @@ public class Process implements Runnable {
                         vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
                         System.out.println(Thread.currentThread().getId() + ": vote: no");
                     } else {
+                        vote(new Operation(OperationType.VOTE, "YES", this.id, op.getTransactionId()), op.getNode());
                         System.out.println(Thread.currentThread().getId() + ": vote: yes");
                     }
                 }
                 else if (op.isVote()) {
-
+                    System.out.println("vote?");
+                    votes.add(op.getProperty());
+                    System.out.println(Thread.currentThread().getId() + ": got " + op.getProperty() + " from " + op.getNode());
+                    System.out.println(votes);
+                }
+                else if(op.isCommit()) {
+                    System.out.println(Thread.currentThread().getId() + ": commiting!");
+                    //commit!
                 }
 
             }
             i.remove();
         }
-        }
-
-
-
-
-
-
-
+        
+     }
 
     private void vote(Operation answer, Integer node) {
         send(node, answer);
@@ -191,32 +228,10 @@ public class Process implements Runnable {
     private void startVoting() {
 
         //if currentTransaction != null it means that this node initiated this transaction
-        if (currentTransaction != null) {
             for (Integer node: currentTransaction.getParticipants()) {
                 System.out.println("Sending vote requests to:");
                 System.out.println(currentTransaction.getParticipants());
                 send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
             }
-        }
-    }
-
-
-
-    private Transaction generateTransaction(Integer node, String property1, String property2, Integer value) {
-        Transaction t = new Transaction();
-        t.setNode(node);
-        Operation op1 = new Operation();
-        op1.setType(OperationType.READ);
-        op1.setProperty(property1);
-        Operation op2 = new Operation();
-        op2.setType(OperationType.WRITE);
-        op2.setProperty(property2);
-        op2.setValue(value);
-        Operation[] ops = new Operation[2];
-        ops[0] = op1;
-        ops[1] = op2;
-        t.setOperations(ops);
-        return t;
     }
 }
-

@@ -79,5 +79,9 @@ public class Operation {
         return this.type == OperationType.VOTE;
     }
 
+    public boolean isCommit() {
+        return this.type == OperationType.COMMIT;
+    }
+
 
 }

@@ -4,6 +4,15 @@ import java.util.UUID;
 public class Transaction {
 
 
+    public Integer getParentNode() {
+        return parentNode;
+    }
+
+    public void setParentNode(Integer parentNode) {
+        this.parentNode = parentNode;
+    }
+
+    private Integer parentNode;
     private Operation[] operations;
     private UUID id;
     private Integer node;
