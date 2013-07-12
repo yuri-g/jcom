@@ -22,7 +22,7 @@ public class TransactionParser {
         Object transactionsToParse = loadTransactions(fileName);
         //distributed transaction to be returned
         DistributedTransaction distributedTransaction = new DistributedTransaction();
-        ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+        ArrayList<Transaction> transactions = new ArrayList<>();
         //get transactions from yaml file (convert Object to LinkedHashMap)
         LinkedHashMap<String, ArrayList<Object>> parsedTransactions = (LinkedHashMap<String, ArrayList<Object>>) transactionsToParse;
         //iterating over root transactions
@@ -35,7 +35,7 @@ public class TransactionParser {
                 Transaction finalTransaction = new Transaction();
                 Integer who = (Integer) innerTransaction.get("who");
                 //parsing operations from transaction
-                ArrayList<Operation> finalOperations = new ArrayList<Operation>();
+                ArrayList<Operation> finalOperations = new ArrayList<>();
                 ArrayList<Object> operations = (ArrayList<Object>) innerTransaction.get("operations");
                 //iterating over operations, adding them to finalTransaction
                 for (Object op : operations) {
@@ -48,6 +48,8 @@ public class TransactionParser {
                     String delimeters = "[ ]+";
                     String[] tokens = value.split(delimeters);
                     operation.setValue(null);
+
+                    System.out.println(tokens[2]);
                     operation.setResource(tokens[2]);
                     //checking if type of operation is Writing
                     //since the syntax is different:
@@ -57,6 +59,11 @@ public class TransactionParser {
                         delimeters = "[=]";
                         String[] writeTokens = tokens[0].split(delimeters);
                         operation.setProperty(writeTokens[0]);
+                        for (String s: writeTokens) {
+                            System.out.println(s);
+                        }
+
+
                         operation.setValue(Integer.parseInt(writeTokens[1]));
                     }
                     //syntax for Reading:

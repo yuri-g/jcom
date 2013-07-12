@@ -4,15 +4,30 @@ package im.yuri.jcom;
 import org.ho.yaml.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
+import java.nio.channels.FileChannel;
 
-public class Resource {
+class Resource {
     private HashMap properties;
     private Random randomGenerator = new Random();
+    private String fileName;
     private Integer id;
 
+
+    public Resource(String fileName) throws IOException {
+        try {
+            this.properties = Yaml.loadType(new File(fileName), HashMap.class);
+        }
+        catch (FileNotFoundException e) {
+
+            e.printStackTrace();
+        }
+
+    }
 
     public Resource(Integer id) {
         properties = new HashMap();
@@ -22,6 +37,8 @@ public class Resource {
         properties.put("z", randomGenerator.nextInt(10));
         saveResource();
     }
+
+
 
     public boolean setValue(String property, Integer newValue, Float fault) {
         if (randomGenerator.nextFloat() < fault) {

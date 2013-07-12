@@ -2,12 +2,12 @@ package im.yuri.jcom;
 
 import java.util.ArrayList;
 
-public class Channel {
+class Channel {
     private ArrayList<Object> stack;
 
 
     public Channel() {
-        stack = new ArrayList<Object>();
+        stack = new ArrayList<>();
     }
 
     public void push(Object item) {

@@ -8,15 +8,15 @@ public class ErrorsMap {
     private HashMap<String, Boolean> errors;
 
     public ErrorsMap() {
-        errors = new HashMap<String, Boolean>();
+        errors = new HashMap<>();
     }
 
     public boolean any(Operation op) {
         return errors.get(op.getProperty()) != null;
     }
 
-    public void put(String key, boolean value) {
-        this.errors.put(key, value);
+    public void put(String key) {
+        this.errors.put(key, true);
 
     }
 }
