@@ -19,6 +19,7 @@ public class Process implements Runnable {
     private Integer wastedTime;
     private DistributedTransaction currentTransaction;
     private ArrayList<String> votes;
+    private ArrayList<Resource> resources;
 
     public Process(Integer id, Channel[][] channels, Float faultProbability) {
         this.id = id;
@@ -28,17 +29,10 @@ public class Process implements Runnable {
         executionQueue = new ArrayList<>();
         wastedTime = 0;
         votes = new ArrayList<>();
+        resources = new ArrayList<>();
     }
 
     public void run() {
-        resource = new Resource(this.id);
-
-//        try {
-//            Resource bs = new Resource("test.yaml");
-//        } catch (IOException e) {
-//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//        }
-
         //right now the node with id==0 is the only one that creates transactions
         if (this.id == 0) {
             currentTransaction = parse("transactions.yaml");
@@ -177,6 +171,9 @@ public class Process implements Runnable {
                 }
                 else if(op.isCommit()) {
                     System.out.println(Thread.currentThread().getId() + ": commiting!");
+                    for(Resource r: resources) {
+                        r.saveResource();
+                    }
                     //commit!
                 }
 
@@ -185,6 +182,34 @@ public class Process implements Runnable {
         }
         
      }
+
+
+
+    private boolean executeTransaction(Transaction transaction) throws IOException {
+        for (Operation o : transaction.getOperations()) {
+            OperationType type = o.getType();
+            Resource res = new Resource();
+            switch (type) {
+                case READ:
+                    res = new Resource(o.getResource() + ".yaml");
+                    System.out.println(Thread.currentThread().getId() + ": reading value of " + o.getProperty() + ": " + res.getValue(o.getProperty()) + " from " + res.getFileName());
+                    break;
+                case WRITE:
+                    res = new Resource(o.getResource() + ".yaml");
+                    if (res.setValue(o.getProperty(), o.getValue(), faultProbability)) {
+                        System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                    }
+                    else {
+                        System.out.println("Error while writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                        errors.put(transaction.getId().toString());
+                    }
+                    resources.add(res);
+                    break;
+            }
+        }
+        return true;
+    }
+
 
     private void vote(Operation answer, Integer node) {
         send(node, answer);
@@ -210,31 +235,6 @@ public class Process implements Runnable {
         this.channels[this.id][node].push(o);
     }
 
-
-
-
-    private boolean executeTransaction(Transaction transaction) throws IOException {
-        for (Operation o : transaction.getOperations()) {
-            OperationType type = o.getType();
-            switch (type) {
-                case READ:
-                    System.out.println("Reading value of " + o.getProperty() + ": " + this.resource.getValue(o.getProperty()) + " [process " + id + "]");
-                    break;
-                case WRITE:
-                    //need to put here real writing and accessing the resource
-                    Resource res = new Resource(o.getResource() + ".yaml");
-                    if (res.setValue(o.getProperty(), o.getValue(), faultProbability)) {
-                        System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
-                    }
-                    else {
-                        System.out.println("Error while writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
-                        errors.put(transaction.getId().toString());
-                    }
-                    break;
-            }
-        }
-        return true;
-    }
 
     private void startVoting() {
 

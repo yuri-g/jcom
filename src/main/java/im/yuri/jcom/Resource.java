@@ -14,11 +14,24 @@ import java.nio.channels.FileChannel;
 class Resource {
     private HashMap properties;
     private Random randomGenerator = new Random();
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     private String fileName;
     private Integer id;
 
+    public Resource() {
+
+    }
 
     public Resource(String fileName) throws IOException {
+        this.fileName = fileName;
         try {
             this.properties = Yaml.loadType(new File(fileName), HashMap.class);
         }
@@ -29,17 +42,6 @@ class Resource {
 
     }
 
-    public Resource(Integer id) {
-        properties = new HashMap();
-        this.id = id;
-        properties.put("x", randomGenerator.nextInt(10));
-        properties.put("y", randomGenerator.nextInt(10));
-        properties.put("z", randomGenerator.nextInt(10));
-        saveResource();
-    }
-
-
-
     public boolean setValue(String property, Integer newValue, Float fault) {
         if (randomGenerator.nextFloat() < fault) {
             return false;
@@ -49,14 +51,13 @@ class Resource {
             this.properties.put(property, newValue);
             //need to rewrite because of transactions
             //first, make all actions, get COMMIT and then save
-            saveResource();
             return true;
         }
     }
 
-    private void saveResource() {
+    public void saveResource() {
         try {
-            Yaml.dump(this.properties, new File("resource " + id + ".yaml"));
+            Yaml.dump(this.properties, new File(fileName));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -66,7 +67,7 @@ class Resource {
     //gets values from YAML file
     private void reloadResource() {
         try {
-            this.properties = Yaml.loadType(new File("resource " + this.id + ".yaml"), HashMap.class);
+            this.properties = Yaml.loadType(new File(fileName), HashMap.class);
         }
         catch (FileNotFoundException e) {
 
