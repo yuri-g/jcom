@@ -11,12 +11,12 @@ import java.util.*;
 public class Process implements Runnable {
 
     private Channel[][] channels;
-    private Resource resource;
     private Integer id;
     private Float faultProbability;
     private ArrayList<Object> executionQueue;
     private ErrorsMap errors;
     private Integer wastedTime;
+    private Integer waitingTime;
     private DistributedTransaction currentTransaction;
     private ArrayList<String> votes;
     private ArrayList<Resource> resources;
@@ -28,6 +28,7 @@ public class Process implements Runnable {
         errors = new ErrorsMap();
         executionQueue = new ArrayList<>();
         wastedTime = 0;
+        waitingTime = 0;
         votes = new ArrayList<>();
         resources = new ArrayList<>();
     }
@@ -36,14 +37,17 @@ public class Process implements Runnable {
         //right now the node with id==0 is the only one that creates transactions
         if (this.id == 0) {
             currentTransaction = parse("transactions.yaml");
-            currentTransaction.setNode(this.id);
-            //sending phase
-            for (Transaction t : currentTransaction.getTransactions() ) {
-                send(t.getNode(), t);
-                logSendTransaction(t, this.id);
-            }
-
         }
+        else {
+            currentTransaction = parse("transactions2.yaml");
+        }
+        currentTransaction.setNode(this.id);
+        //sending phase
+        for (Transaction t : currentTransaction.getTransactions() ) {
+            send(t.getNode(), t);
+            logSendTransaction(t, this.id);
+        }
+
 
         //reading phase
         while(true) {
@@ -78,16 +82,24 @@ public class Process implements Runnable {
                         if(decideCommit()) {
                             o.setType(OperationType.COMMIT);
                             broadcast(o, currentTransaction.getParticipants());
-                            System.out.println("got all YES, commit!");
+                            System.out.println(Thread.currentThread().getId() + ": got all YES, commit!");
 
                         }
                         else
                         {
                             o.setType(OperationType.ABORT);
                             broadcast(o, currentTransaction.getParticipants());
-                            System.out.println("got NO, aborting!");
+                            System.out.println(Thread.currentThread().getId() + ": got NO, aborting!");
                         }
                         currentTransaction = null;
+                    }
+                    else {
+                        System.out.println(Thread.currentThread().getId() + ": waiting for votes...");
+                        waitingTime += 500;
+                        if (waitingTime == 3000) {
+                            currentTransaction = null;
+                        }
+
                     }
 
                 }
@@ -144,7 +156,7 @@ public class Process implements Runnable {
                     executeTransaction(tr);
                 }
                 catch (IOException e) {
-
+                    e.printStackTrace();
                 }
                 if (tr.getParentNode().equals(this.id)) {
                     startVoting();
@@ -152,19 +164,26 @@ public class Process implements Runnable {
 
             }
             else if (isOperation(o)) {
+
                 Operation op = (Operation) o;
                 if (op.isVoteRequest())
                 {
+                    if (this.id != 0) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     if (errors.any(op)){
                         vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
-                        System.out.println(Thread.currentThread().getId()+ ": vote: no");
+                        System.out.println(Thread.currentThread().getId()+ ": votes NO (transaction " + op.getTransactionId() + ")");
                     } else {
                         vote(new Operation(OperationType.VOTE, "YES", this.id, op.getTransactionId()), op.getNode());
-                        System.out.println(Thread.currentThread().getId() + ": vote: yes");
+                        System.out.println(Thread.currentThread().getId() + ": votes YES (transaction " + op.getTransactionId() + ")");
                     }
                 }
                 else if (op.isVote()) {
-                    System.out.println("vote?");
                     votes.add(op.getProperty());
                     System.out.println(Thread.currentThread().getId() + ": got " + op.getProperty() + " from " + op.getNode());
                     System.out.println(votes);
@@ -175,6 +194,9 @@ public class Process implements Runnable {
                         r.saveResource();
                     }
                     //commit!
+                }
+                else if (op.isAbort()) {
+                    currentTransaction = null;
                 }
 
             }
@@ -197,10 +219,10 @@ public class Process implements Runnable {
                 case WRITE:
                     res = new Resource(o.getResource() + ".yaml");
                     if (res.setValue(o.getProperty(), o.getValue(), faultProbability)) {
-                        System.out.println("Writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                        System.out.println(Thread.currentThread().getId() + ": writing " + o.getValue() + " to " + o.getProperty());
                     }
                     else {
-                        System.out.println("Error while writing " + o.getValue() + " to " + o.getProperty()   + " [process " + id + "]");
+                        System.out.println(Thread.currentThread().getId() + ": error while writing " + o.getValue() + " to " + o.getProperty());
                         errors.put(transaction.getId().toString());
                     }
                     resources.add(res);
@@ -240,7 +262,7 @@ public class Process implements Runnable {
 
         //if currentTransaction != null it means that this node initiated this transaction
             for (Integer node: currentTransaction.getParticipants()) {
-                System.out.println("Sending vote requests to:");
+                System.out.println(Thread.currentThread().getId() + ": sending vote requests to:");
                 System.out.println(currentTransaction.getParticipants());
                 send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
             }

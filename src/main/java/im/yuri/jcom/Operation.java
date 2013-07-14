@@ -83,5 +83,9 @@ public class Operation {
         return this.type == OperationType.COMMIT;
     }
 
+    public boolean isAbort() {
+        return this.type == OperationType.ABORT;
+    }
+
 
 }

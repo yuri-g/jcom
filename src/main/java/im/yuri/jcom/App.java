@@ -20,7 +20,7 @@ public class App
             }
         }
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             executor.submit(new Process(i, channels, faultProbability));
         }
 
