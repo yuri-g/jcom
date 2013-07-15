@@ -59,7 +59,7 @@ public class Process implements Runnable {
         while(true) {
             if (!Thread.currentThread().isInterrupted()) {
                 if (!channelIsEmpty()) {
-                    for (int i = 0; i <= nodesCount; i++) {
+                    for (int i = 0; i < nodesCount; i++) {
                         Object result = read(i);
                         if (result != null) {
                             executionQueue.add(result);
@@ -140,7 +140,7 @@ public class Process implements Runnable {
 
     private boolean channelIsEmpty() {
 
-        for(int i = 0; i <= 1; i++) {
+        for(int i = 0; i < nodesCount; i++) {
             if (!channels[i][this.id].isEmpty()) {
                 return false;
             }
@@ -170,9 +170,6 @@ public class Process implements Runnable {
             }
             else if (isOperation(o)) {
                 Operation op = (Operation) o;
-                if (this.id == 2) {
-                    System.out.println(op.getType());
-                }
                 if (op.isVoteRequest())
                 {
 //                    if (this.id.equals(currentTransaction.getNode())) {
