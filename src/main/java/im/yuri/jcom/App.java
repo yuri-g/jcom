@@ -13,16 +13,16 @@ public class App
         // remove this!
         Float faultProbability = .2f;
         Channel[][] channels = new Channel[5][5];
-        Process[] processes = new Process[5];
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
                 channels[i][j] = new Channel();
             }
         }
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
         for (int i = 0; i < 3; i++) {
-            executor.submit(new Process(i, channels, faultProbability));
+            executor.submit(new Process(i, channels, faultProbability, 3));
         }
+
 
     }
 }

@@ -5,6 +5,7 @@ import im.yuri.jcom.util.OperationType;
 import static im.yuri.jcom.util.Helpers.*;
 import static im.yuri.jcom.util.TransactionParser.*;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -20,11 +21,13 @@ public class Process implements Runnable {
     private DistributedTransaction currentTransaction;
     private ArrayList<String> votes;
     private ArrayList<Resource> resources;
+    private Integer nodesCount;
 
-    public Process(Integer id, Channel[][] channels, Float faultProbability) {
+    public Process(Integer id, Channel[][] channels, Float faultProbability, Integer nodesCount) {
         this.id = id;
         this.channels = channels;
         this.faultProbability = faultProbability;
+        this.nodesCount = nodesCount;
         errors = new ErrorsMap();
         executionQueue = new ArrayList<>();
         wastedTime = 0;
@@ -35,25 +38,28 @@ public class Process implements Runnable {
 
     public void run() {
         //right now the node with id==0 is the only one that creates transactions
-        if (this.id == 0) {
-            currentTransaction = parse("transactions.yaml");
+        try {
+            currentTransaction = parse("node " + this.id + " transactions.yaml");
+        } catch (FileNotFoundException e) {
+            currentTransaction = null;
         }
-        else {
-            currentTransaction = parse("transactions2.yaml");
+
+        if (currentTransaction != null) {
+            currentTransaction.setNode(this.id);
+            //sending phase
+            for (Transaction t : currentTransaction.getTransactions() ) {
+                send(t.getNode(), t);
+                logSendTransaction(t, this.id);
+            }
         }
-        currentTransaction.setNode(this.id);
-        //sending phase
-        for (Transaction t : currentTransaction.getTransactions() ) {
-            send(t.getNode(), t);
-            logSendTransaction(t, this.id);
-        }
+
 
 
         //reading phase
         while(true) {
             if (!Thread.currentThread().isInterrupted()) {
                 if (!channelIsEmpty()) {
-                    for (int i = 0; i <= 1; i++) {
+                    for (int i = 0; i <= nodesCount; i++) {
                         Object result = read(i);
                         if (result != null) {
                             executionQueue.add(result);
@@ -64,8 +70,8 @@ public class Process implements Runnable {
                     try {
                         Thread.sleep(500);
                         if (channelIsEmpty()) {
-                            Thread.sleep(1000);
-                            wastedTime += 1000;
+                            Thread.sleep(500);
+                            wastedTime += 500;
                             if (wastedTime > 5000) {
                                 Thread.currentThread().interrupt();
                             }
@@ -96,7 +102,7 @@ public class Process implements Runnable {
                     else {
                         System.out.println(Thread.currentThread().getId() + ": waiting for votes...");
                         waitingTime += 500;
-                        if (waitingTime == 3000) {
+                        if (waitingTime == 7000) {
                             currentTransaction = null;
                         }
 
@@ -107,7 +113,7 @@ public class Process implements Runnable {
 
             }
             else {
-                System.out.println(Thread.currentThread().getId() + " is dead now.");
+                System.exit(0);
             }
         }
 
@@ -148,7 +154,6 @@ public class Process implements Runnable {
         Iterator<Object> i = executionQueue.iterator();
         while (i.hasNext()) {
             Object o = i.next();
-            System.out.println(o);
             if (isTransaction(o)) {
                 Transaction tr = (Transaction)o;
                 logGetTransaction(tr, this.id);
@@ -164,17 +169,22 @@ public class Process implements Runnable {
 
             }
             else if (isOperation(o)) {
-
                 Operation op = (Operation) o;
+                if (this.id == 2) {
+                    System.out.println(op.getType());
+                }
                 if (op.isVoteRequest())
                 {
-                    if (this.id != 0) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+//                    if (this.id.equals(currentTransaction.getNode())) {
+//                        if (this.id == 2) {
+//                            System.out.println("really?");
+//                        }
+//                        try {
+//                            Thread.sleep(100);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
                     if (errors.any(op)){
                         vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
                         System.out.println(Thread.currentThread().getId()+ ": votes NO (transaction " + op.getTransactionId() + ")");
@@ -189,7 +199,7 @@ public class Process implements Runnable {
                     System.out.println(votes);
                 }
                 else if(op.isCommit()) {
-                    System.out.println(Thread.currentThread().getId() + ": commiting!");
+                    System.out.println(Thread.currentThread().getId() + ": committing!");
                     for(Resource r: resources) {
                         r.saveResource();
                     }
@@ -238,7 +248,6 @@ public class Process implements Runnable {
     }
 
     private Object read(Integer node) {
-
         Object result = channels[node][this.id].pull();
         if (result != null) {
             if (result.getClass() == Transaction.class) {
@@ -259,12 +268,10 @@ public class Process implements Runnable {
 
 
     private void startVoting() {
+        System.out.println(Thread.currentThread().getId() + ": sending vote requests to: \n" + currentTransaction.getParticipants());
+        for (Integer node: currentTransaction.getParticipants()) {
 
-        //if currentTransaction != null it means that this node initiated this transaction
-            for (Integer node: currentTransaction.getParticipants()) {
-                System.out.println(Thread.currentThread().getId() + ": sending vote requests to:");
-                System.out.println(currentTransaction.getParticipants());
-                send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
-            }
+            send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
+        }
     }
 }

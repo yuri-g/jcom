@@ -17,7 +17,7 @@ public class TransactionParser {
 
 
 
-    public static DistributedTransaction parse(String fileName) {
+    public static DistributedTransaction parse(String fileName) throws FileNotFoundException {
         //parse yaml to Object
         Object transactionsToParse = loadTransactions(fileName);
         //distributed transaction to be returned
@@ -48,8 +48,6 @@ public class TransactionParser {
                     String delimeters = "[ ]+";
                     String[] tokens = value.split(delimeters);
                     operation.setValue(null);
-
-                    System.out.println(tokens[2]);
                     operation.setResource(tokens[2]);
                     //checking if type of operation is Writing
                     //since the syntax is different:
@@ -59,11 +57,6 @@ public class TransactionParser {
                         delimeters = "[=]";
                         String[] writeTokens = tokens[0].split(delimeters);
                         operation.setProperty(writeTokens[0]);
-                        for (String s: writeTokens) {
-                            System.out.println(s);
-                        }
-
-
                         operation.setValue(Integer.parseInt(writeTokens[1]));
                     }
                     //syntax for Reading:
@@ -87,16 +80,11 @@ public class TransactionParser {
         }
         return distributedTransaction;
     }
-    private static Object loadTransactions(String filename) {
-        Object o = new Object();
+    private static Object loadTransactions (String filename) throws FileNotFoundException {
+        Object o;
         Yaml yaml = new Yaml();
-        try {
-            o = yaml.load(new FileInputStream(filename));
+        o = yaml.load(new FileInputStream(filename));
 
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
         return o;
     }
 
