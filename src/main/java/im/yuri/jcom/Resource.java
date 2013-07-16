@@ -10,20 +10,36 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 
-class Resource {
+public class Resource {
     private HashMap properties;
+    private String fileName;
+    private String transactionId;
     private Random randomGenerator = new Random();
 
     public String getFileName() {
         return fileName;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+
+
+    public String getTransactionId() {
+        return transactionId;
     }
 
-    private String fileName;
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
     private Integer id;
 
     public Resource() {
@@ -47,8 +63,9 @@ class Resource {
             return false;
         }
         else {
-            reloadResource();
+//            reloadResource();
             this.properties.put(property, newValue);
+            System.out.println(properties.values());
             //need to rewrite because of transactions
             //first, make all actions, get COMMIT and then save
             return true;
