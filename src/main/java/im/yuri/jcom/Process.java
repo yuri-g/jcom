@@ -14,6 +14,7 @@ public class Process implements Runnable {
 
     private Channel[][] channels;
     private Integer id;
+    private Long threadId;
     private final Float faultProbability;
     private ArrayList<Object> executionQueue;
     private ErrorsMap errors;
@@ -35,6 +36,7 @@ public class Process implements Runnable {
         waitingTime = 0;
         votes = new ArrayList<>();
         resources = new ArrayList<>();
+        this.threadId = Thread.currentThread().getId();
     }
 
     public void run() {
@@ -51,7 +53,7 @@ public class Process implements Runnable {
             //broadcast the transaction to participants
             for (Transaction t : currentTransaction.getTransactions() ) {
                 send(t.getNode(), t);
-                logSendTransaction(t);
+                logSendTransaction(t, this.id);
             }
             startVoting();
         }
@@ -105,7 +107,7 @@ public class Process implements Runnable {
                             o.setType(OperationType.COMMIT);
                             o.setTransactionId(currentTransaction.getId().toString().substring(0, 4));
                             broadcast(o, currentTransaction.getParticipants());
-                            logInitCommit(currentTransaction.getId().toString().substring(0, 4));
+                            logInitCommit(currentTransaction.getId().toString().substring(0, 4), this.id);
                         }
                         else
                         {
@@ -113,7 +115,7 @@ public class Process implements Runnable {
                             o.setType(OperationType.ABORT);
 
                             broadcast(o, currentTransaction.getParticipants());
-                            logAbort();
+                            logAbort(this.id);
 
                         }
                         //transaction is finished, so make it null
@@ -123,7 +125,7 @@ public class Process implements Runnable {
                     else {
                         //increase waiting time
                         waitingTime += 500;
-                        logWaiting();
+                        logWaiting(this.id);
                         if (waitingTime == 5000) {
                             //if thread didn't receive any votes in 5 seconds, broadcast ABORT
                             o.setType(OperationType.ABORT);
@@ -152,7 +154,9 @@ public class Process implements Runnable {
             Object o = i.next();
             if (isTransaction(o)) {
                 Transaction tr = (Transaction)o;
-                logGetTransaction(tr);
+//                String what = ((Transaction) o).getNode() + "/" + ((Transaction) o).getParentNode() + "(node " + this.id + ")";
+//                System.out.println(what);
+                logGetTransaction(tr, this.id);
                 try {
                     executeTransaction(tr);
                 }
@@ -168,19 +172,19 @@ public class Process implements Runnable {
                 {
                     if (errors.any(op)){
                         vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
-                        logVotes("NO", op.getTransactionId().substring(0, 4));
+                        logVotes("NO", op.getTransactionId().substring(0, 4), this.id);
                     } else {
                         vote(new Operation(OperationType.VOTE, "YES", this.id, op.getTransactionId()), op.getNode());
-                        logVotes("YES", op.getTransactionId().substring(0, 4));
+                        logVotes("YES", op.getTransactionId().substring(0, 4), this.id);
                     }
                 }
                 else if (op.isVote()) {
                     votes.add(op.getProperty());
-                    logGetVote(op.getProperty(), op.getNode());
+                    logGetVote(op.getProperty(), op.getNode(), this.id);
 
                 }
                 else if(op.isCommit()) {
-                    logCommit(op.getTransactionId());
+                    logCommit(op.getTransactionId(), this.id);
                     for(Resource r: resources) {
                         if (r.getTransactionId().equals(op.getTransactionId())) {
                             r.saveResource();
@@ -211,16 +215,16 @@ public class Process implements Runnable {
             switch (type) {
                 //if READ, then open needed resource and read the value
                 case READ:
-                    logReading(o.getProperty(), res);
+                    logReading(o.getProperty(), res, this.id);
                     break;
                 //if WRITE, open needed resource and try to write the value
                 //can fail! depends on the faultProbability constant
                 case WRITE:
                     if (res.setValue(o.getProperty(), o.getValue(), faultProbability)) {
-                        logWriting(o);
+                        logWriting(o, this.id);
                     }
                     else {
-                        logWriteError(o);
+                        logWriteError(o, this.id);
                         errors.put(transaction.getId().toString());
                     }
 
@@ -294,7 +298,7 @@ public class Process implements Runnable {
 
 
     private void startVoting() {
-        logSendVoteRequests(currentTransaction.getParticipants());
+        logSendVoteRequests(currentTransaction.getParticipants(), this.id);
         for (Integer node: currentTransaction.getParticipants()) {
             send(node, new Operation(OperationType.VOTE_REQUEST, currentTransaction.getId().toString(), this.id, currentTransaction.getId().toString()));
         }
