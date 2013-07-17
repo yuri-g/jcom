@@ -69,12 +69,7 @@ public class Resource {
             return false;
         }
         else {
-//            reloadResource();
             changedProperties.put(property, newValue);
-//            this.properties.put(property, newValue);
-            System.out.println(properties.values());
-            //need to rewrite because of transactions
-            //first, make all actions, get COMMIT and then save
             return true;
         }
     }
@@ -84,14 +79,10 @@ public class Resource {
         Charset charset = StandardCharsets.UTF_8;
         try {
             String content = new String(Files.readAllBytes(path), charset);
-            System.out.println("has next!");
             Iterator i = changedProperties.entrySet().iterator();
             while(i.hasNext()) {
-                System.out.println("really?");
                 Map.Entry pairs = (Map.Entry)i.next();
-                System.out.println(pairs.getKey() + ": " + properties.get(pairs.getKey()));
                 content = content.replaceAll(pairs.getKey() + ": " + properties.get(pairs.getKey()), pairs.getKey() + ": " + pairs.getValue());
-                System.out.println(content);
             }
             Files.write(path, content.getBytes(charset));
         } catch (IOException e) {

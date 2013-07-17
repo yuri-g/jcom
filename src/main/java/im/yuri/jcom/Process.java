@@ -100,7 +100,6 @@ public class Process implements Runnable {
                     //check if thread has any votes from others
                     if(checkVotes()) {
                         //if has, check if there is a NO vote
-                        System.out.println(decideCommit());
                         if(decideCommit()) {
                             //if there is no NO vote, broadcast COMMIT message to all participant
                             o.setType(OperationType.COMMIT);
@@ -148,11 +147,6 @@ public class Process implements Runnable {
 
     private void execute(ArrayList<Object> executionQueue) {
         Iterator<Object> i = executionQueue.iterator();
-        if (this.id == 0) {
-            for (Object o: executionQueue) {
-                System.out.println(o);
-            }
-        }
         while (i.hasNext()) {
 
             Object o = i.next();
