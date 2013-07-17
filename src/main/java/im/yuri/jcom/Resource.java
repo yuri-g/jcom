@@ -7,8 +7,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Random;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
@@ -16,6 +20,7 @@ public class Resource {
     private HashMap properties;
     private String fileName;
     private String transactionId;
+    private HashMap<String, Integer> changedProperties;
     private Random randomGenerator = new Random();
 
     public String getFileName() {
@@ -47,6 +52,7 @@ public class Resource {
     }
 
     public Resource(String fileName) throws IOException {
+        changedProperties = new HashMap<>();
         this.fileName = fileName;
         try {
             this.properties = Yaml.loadType(new File(fileName), HashMap.class);
@@ -64,7 +70,8 @@ public class Resource {
         }
         else {
 //            reloadResource();
-            this.properties.put(property, newValue);
+            changedProperties.put(property, newValue);
+//            this.properties.put(property, newValue);
             System.out.println(properties.values());
             //need to rewrite because of transactions
             //first, make all actions, get COMMIT and then save
@@ -73,12 +80,24 @@ public class Resource {
     }
 
     public void saveResource() {
+        Path path = Paths.get(fileName);
+        Charset charset = StandardCharsets.UTF_8;
         try {
-            Yaml.dump(this.properties, new File(fileName));
+            String content = new String(Files.readAllBytes(path), charset);
+            System.out.println("has next!");
+            Iterator i = changedProperties.entrySet().iterator();
+            while(i.hasNext()) {
+                System.out.println("really?");
+                Map.Entry pairs = (Map.Entry)i.next();
+                System.out.println(pairs.getKey() + ": " + properties.get(pairs.getKey()));
+                content = content.replaceAll(pairs.getKey() + ": " + properties.get(pairs.getKey()), pairs.getKey() + ": " + pairs.getValue());
+                System.out.println(content);
+            }
+            Files.write(path, content.getBytes(charset));
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+//            Yaml.dump(this.properties, new File(fileName));
     }
 
     //gets values from YAML file
