@@ -3,11 +3,18 @@ package im.yuri.jcom;
 import im.yuri.jcom.util.OperationType;
 
 public class Operation {
+
+    //type of operation, defined in util/OperationType enum
     private OperationType type;
+    //property to read or to write
     private String property;
+    //thread responsible for execution
     private Integer node;
+    //resource to use while reading/writing
     private String resource;
+    //value to write
     private Integer value;
+    //id of transaction
     private String transactionId;
 
     public String getTransactionId() {
@@ -71,18 +78,24 @@ public class Operation {
         this.resource = resource;
     }
 
+
+
+    //is operation a vote request?
     public boolean isVoteRequest() {
         return this.type == OperationType.VOTE_REQUEST;
     }
 
+    //vote?
     public boolean isVote() {
         return this.type == OperationType.VOTE;
     }
 
+    //commit message?
     public boolean isCommit() {
         return this.type == OperationType.COMMIT;
     }
 
+    //abort message?
     public boolean isAbort() {
         return this.type == OperationType.ABORT;
     }

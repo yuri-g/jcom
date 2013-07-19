@@ -6,13 +6,21 @@ import im.yuri.jcom.Resource;
 
 import java.util.ArrayList;
 
+
+//helpers class
 public class Helpers {
+
+    //check if received object is transaction
     public static boolean isTransaction(Object result) {
         return result.getClass() == Transaction.class;
     }
+
+    //check if received object is operation
     public static boolean isOperation(Object result) {
         return result.getClass() == Operation.class;
     }
+
+    //methods to log different information
     public static void logGetTransaction(Transaction transaction, Integer currentNode) {
         System.out.println("Node " + currentNode + ": got transaction " + transaction.getId().toString().substring(0, 4) + " from node " + transaction.getParentNode());
     }
@@ -39,7 +47,6 @@ public class Helpers {
         System.out.println("Node " + currentNode +  ": reading value of " + property + ": " + res.getValue(property)+ " from " + res.getFileName());
     }
 
-
     public static void logWriting(Operation o, Integer currentNode) {
         System.out.println("Node " + currentNode +  ": writing " + o.getValue() + " to " + o.getProperty());
     }
@@ -60,6 +67,8 @@ public class Helpers {
         System.out.println("Node " + currentNode +  ": waiting for votes...");
     }
 
+
+    //determine operation type
     public static OperationType getOperationType(String type) {
         OperationType operationType = null;
         switch (type) {
@@ -79,5 +88,4 @@ public class Helpers {
         return operationType;
 
     }
-//    public static void logGetVote()
 }

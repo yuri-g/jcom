@@ -12,17 +12,27 @@ import java.util.*;
 
 public class Process implements Runnable {
 
+    //communication channel
     private Channel[][] channels;
+    //id of the thread
     private Integer id;
-    private Long threadId;
+    //probability to fail while writing
     private final Float faultProbability;
+    //list of operations that thread has to execute
     private ArrayList<Object> executionQueue;
+    //encountered errors
     private ErrorsMap errors;
+    //time wasted by thread
     private Integer wastedTime;
+    //time spent waiting for response
     private Integer waitingTime;
+    //current distributed transaction
     private DistributedTransaction currentTransaction;
+    //all received votes
     private ArrayList<String> votes;
+    //resources that thread is using
     private ArrayList<Resource> resources;
+    //total number of threads
     private Integer nodesCount;
 
     public Process(Integer id, Channel[][] channels, Float faultProbability, Integer nodesCount) {
@@ -36,11 +46,10 @@ public class Process implements Runnable {
         waitingTime = 0;
         votes = new ArrayList<>();
         resources = new ArrayList<>();
-        this.threadId = Thread.currentThread().getId();
     }
 
     public void run() {
-        //right now the node with id==0 is the only one that creates transactions
+        //check if there are any transactions for this thread
         try {
             currentTransaction = parse("node " + this.id + " transactions.yaml");
         } catch (FileNotFoundException e) {
@@ -55,6 +64,7 @@ public class Process implements Runnable {
                 send(t.getNode(), t);
                 logSendTransaction(t, this.id);
             }
+            //send vote requests and wait for answers
             startVoting();
         }
 
@@ -70,6 +80,7 @@ public class Process implements Runnable {
                     for (int i = 0; i < nodesCount; i++) {
                         Object result = read(i);
                         if (result != null) {
+                            //add operation from the channel to execution queue
                             executionQueue.add(result);
                         }
                     }
@@ -113,7 +124,6 @@ public class Process implements Runnable {
                         {
                             //if there is a NO vote, broadcast ABORT to all participant
                             o.setType(OperationType.ABORT);
-
                             broadcast(o, currentTransaction.getParticipants());
                             logAbort(this.id);
 
@@ -147,17 +157,19 @@ public class Process implements Runnable {
    }
 
 
+
+    //executing operations from execution queue
     private void execute(ArrayList<Object> executionQueue) {
         Iterator<Object> i = executionQueue.iterator();
+        //iterate over the queue
         while (i.hasNext()) {
-
             Object o = i.next();
+            //check if thread received transaction
             if (isTransaction(o)) {
                 Transaction tr = (Transaction)o;
-//                String what = ((Transaction) o).getNode() + "/" + ((Transaction) o).getParentNode() + "(node " + this.id + ")";
-//                System.out.println(what);
                 logGetTransaction(tr, this.id);
                 try {
+                    //execute it
                     executeTransaction(tr);
                 }
                 catch (IOException e) {
@@ -166,25 +178,36 @@ public class Process implements Runnable {
 
 
             }
+            //if received object is operation
             else if (isOperation(o)) {
                 Operation op = (Operation) o;
+                //is it a vote request?
                 if (op.isVoteRequest())
                 {
+                    //check if there were errors while executing transaction
                     if (errors.any(op)){
+                        //if yes, vote NO
                         vote(new Operation(OperationType.VOTE, "NO", this.id, op.getTransactionId()), op.getNode());
                         logVotes("NO", op.getTransactionId().substring(0, 4), this.id);
                     } else {
+                        //otherwise vote YES
                         vote(new Operation(OperationType.VOTE, "YES", this.id, op.getTransactionId()), op.getNode());
                         logVotes("YES", op.getTransactionId().substring(0, 4), this.id);
                     }
                 }
+
+                //if it's a vote
                 else if (op.isVote()) {
+                    //save vote
                     votes.add(op.getProperty());
                     logGetVote(op.getProperty(), op.getNode(), this.id);
 
                 }
+
+                //is it request to commit
                 else if(op.isCommit()) {
                     logCommit(op.getTransactionId(), this.id);
+                    //commit, i.e. save all changes to resources (files)
                     for(Resource r: resources) {
                         if (r.getTransactionId().equals(op.getTransactionId())) {
                             r.saveResource();
@@ -193,7 +216,9 @@ public class Process implements Runnable {
                     }
                     //commit!
                 }
+                //otherwise, do nothing
                 else if (op.isAbort()) {
+                    //make current transaction null
                     currentTransaction = null;
                 }
 
@@ -273,30 +298,38 @@ public class Process implements Runnable {
         return true;
     }
 
+    //voting method, just sends answer to specified node
     private void vote(Operation answer, Integer node) {
         send(node, answer);
     }
 
+
+    //read something from communication channel
     private Object read(Integer node) {
         Object result = channels[node][this.id].pull();
         if (result != null) {
-            if (result.getClass() == Transaction.class) {
-                return result;
-            }
-            else if (result.getClass() == Operation.class) {
-                return result;
-            }
+//            if (result.getClass() == Transaction.class) {
+//                return result;
+//            }
+//            else if (result.getClass() == Operation.class) {
+//                return result;
+//            }
+            return result;
         }
         return null;
 
 
     }
 
+
+    //send something to specified node
     private void send(Integer node, Object o) {
         this.channels[this.id][node].push(o);
     }
 
 
+
+    //broadcast vote requests to participants
     private void startVoting() {
         logSendVoteRequests(currentTransaction.getParticipants(), this.id);
         for (Integer node: currentTransaction.getParticipants()) {

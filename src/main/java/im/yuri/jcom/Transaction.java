@@ -1,9 +1,17 @@
 package im.yuri.jcom;
 import java.util.UUID;
 
+
+//transaction class
 public class Transaction {
 
+    private Integer parentNode;
+    private Operation[] operations;
+    private UUID id;
+    private Integer node;
 
+
+    //id of the node that initialized transaction (coordinator)
     public Integer getParentNode() {
         return parentNode;
     }
@@ -12,12 +20,7 @@ public class Transaction {
         this.parentNode = parentNode;
     }
 
-    private Integer parentNode;
-    private Operation[] operations;
-    private UUID id;
-    private Integer node;
-
-
+    //get set of operations
     public Operation[] getOperations() {
         return operations;
     }

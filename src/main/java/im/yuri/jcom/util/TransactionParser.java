@@ -13,9 +13,9 @@ import java.util.LinkedHashMap;
 
 import static im.yuri.jcom.util.Helpers.getOperationType;
 
+
+//class that parses the transactions from yaml file
 public class TransactionParser {
-
-
 
     public static DistributedTransaction parse(String fileName) throws FileNotFoundException {
         //parse yaml to Object
@@ -39,7 +39,6 @@ public class TransactionParser {
                 ArrayList<Object> operations = (ArrayList<Object>) innerTransaction.get("operations");
                 //iterating over operations, adding them to finalTransaction
                 for (Object op : operations) {
-
                     Operation operation = new Operation();
                     HashMap<String, String> parsedOperation = (HashMap<String, String>) op;
                     operation.setType(getOperationType(parsedOperation.get("type")));
@@ -80,6 +79,8 @@ public class TransactionParser {
         }
         return distributedTransaction;
     }
+
+    //load the transaction from yaml filew
     private static Object loadTransactions (String filename) throws FileNotFoundException {
         Object o;
         Yaml yaml = new Yaml();

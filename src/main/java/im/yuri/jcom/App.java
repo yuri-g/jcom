@@ -13,6 +13,7 @@ public class App
         Integer nodesCount = 3;
         Float faultProbability = .0f;
         try {
+            //parsing of the command line arguments
             Options opt = new Options();
             opt.addOption("f", true, "Fault probability");
             opt.addOption("c", false, "Number of nodes, default = 3");
@@ -25,12 +26,15 @@ public class App
         }
 
 
+
+        //creating of the communication channel
         Channel[][] channels = new Channel[nodesCount][nodesCount];
         for (int i = 0; i < nodesCount; i++) {
             for (int j = 0; j < nodesCount; j++) {
                 channels[i][j] = new Channel();
             }
         }
+        //start the threads
         ExecutorService executor = Executors.newFixedThreadPool(nodesCount);
         for (int i = 0; i < nodesCount; i++) {
             executor.submit(new Process(i, channels, faultProbability, nodesCount));
